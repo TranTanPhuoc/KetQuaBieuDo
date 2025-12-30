@@ -139,8 +139,9 @@
                 skip: true
             },
             {
+                // 1. Đối tượng khảo sát: biểu đồ cột
                 match: ['đối tượng khảo sát'],
-                type: 'pie',
+                type: 'bar',
                 labelMap: {
                     'học sinh': 'Học sinh',
                     'hs': 'Học sinh',
@@ -154,32 +155,39 @@
                 }
             },
             {
+                // 2. Độ tuổi: biểu đồ cột
                 match: ['độ tuổi'],
-                type: 'pie'
+                type: 'bar'
             },
             {
+                // 3. Màu sắc sản phẩm: biểu đồ tròn
                 match: ['màu sắc'],
                 type: 'pie'
             },
             {
+                // 4. Mùi hương sản phẩm: biểu đồ tròn
                 match: ['mùi hương'],
                 type: 'pie'
             },
             {
-                match: ['cảm giác trên da sử dụng', 'cảm giác trên da'],
+                // 5. Cảm giác trên da tay khi sử dụng: biểu đồ tròn
+                match: ['cảm giác trên da sử dụng', 'cảm giác trên da', 'cảm giác trên da tay khi sử dụng'],
                 type: 'pie'
             },
             {
-                match: ['cảm giác sau khi sử dụng', 'sau khi sử dụng'],
+                // 6. Cảm giác sạch sau khi sử dụng: biểu đồ tròn
+                match: ['cảm giác sau khi sử dụng', 'sau khi sử dụng', 'cảm giác sạch sau khi sử dụng'],
                 type: 'pie'
             },
             {
+                // 7. Mức độ tiện lợi khi sử dụng: biểu đồ tròn
                 match: ['mức độ tiện lợi'],
                 type: 'pie'
             },
             {
+                // 8. Anh/chị có sẵn sàng sử dụng sản phẩm rửa tay sát khuẩn từ thảo dược không?: biểu đồ cột
                 match: ['sẵn sàng sử dụng sản phẩm rửa tay sát khuẩn từ thảo dược'],
-                type: 'pie',
+                type: 'bar',
                 labelMap: {
                     'có': 'Có',
                     'không': 'Không',
@@ -187,7 +195,23 @@
                 }
             },
             {
+                // 9. Theo anh/chị, sản phẩm phù hợp sử dụng ở đâu?: biểu đồ cột
                 match: ['phù hợp sử dụng ở đâu', 'sản phẩm phù hợp sử dụng ở đâu'],
+                type: 'bar'
+            },
+            {
+                // 10. Đánh giá khả năng ứng dụng thực tiễn của sản phẩm: biểu đồ cột
+                match: ['đánh giá khả năng ứng dụng thực tiễn', 'khả năng ứng dụng thực tiễn'],
+                type: 'bar'
+            },
+            {
+                // 11. Theo ông/bà (anh/chị), mức giá nào là phù hợp cho sản phẩm sát khuẩn từ dịch chiết Riềng Mai gan (chai 150ml)?: biểu đồ cột
+                match: ['mức giá nào là phù hợp', 'mức giá', 'giá phù hợp', 'riềng mai gan'],
+                type: 'bar'
+            },
+            {
+                // 12. Theo anh/chị, sản phẩm cần cải thiện điểm nào?: biểu đồ cột
+                match: ['sản phẩm cần cải thiện điểm nào', 'cần cải thiện điểm nào', 'cải thiện'],
                 type: 'bar'
             }
         ];
@@ -448,11 +472,94 @@
                     plugins: {
                         legend: {
                             display: true,
-                            position: 'bottom'
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
                         },
                         tooltip: {
                             callbacks: {
-                                label: (context) => `${context.label}: ${context.formattedValue}`
+                                label: (context) => {
+                                    const label = context.label || '';
+                                    const value = context.formattedValue || '';
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            charts.push(chart);
+        }
+
+        function createBarChart(columnName, labels, values) {
+            const colors = getColors(labels.length);
+            const chartCard = document.createElement('div');
+            chartCard.className = 'chart-card';
+            chartCard.innerHTML = `
+                <div class="chart-title">${columnName}</div>
+                <div class="chart-wrapper">
+                    <canvas id="chart-${charts.length}"></canvas>
+                </div>
+            `;
+
+            chartsContainer.appendChild(chartCard);
+
+            const ctx = document.getElementById(`chart-${charts.length}`).getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Số lượng',
+                        data: values,
+                        backgroundColor: colors.map(c => `${c}B3`),
+                        borderColor: colors,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const label = context.label || '';
+                                    const value = context.formattedValue || '';
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                autoSkip: false, 
+                                maxRotation: 45, 
+                                minRotation: 0,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
                             }
                         }
                     }
@@ -477,7 +584,14 @@
                 return;
             }
 
-            createCategoryChart(columnName, data.map(v => mapLabel(v, config?.labelMap)));
+            // Nếu có config và type là bar, hoặc không có config (mặc định là bar)
+            if (config?.type === 'bar' || !config) {
+                createBarChart(columnName, labels, values);
+                return;
+            }
+
+            // Fallback
+            createBarChart(columnName, labels, values);
         }
 
         function getRandomColor(alpha = 1) {
